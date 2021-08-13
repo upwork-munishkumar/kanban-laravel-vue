@@ -48,4 +48,4 @@ php artisan migrate
 
 ```
 php artisan serve
-```# kanban-laravel-vue
+```
