@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Requests;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\BoardResource;
+use DB;
 
 class BoardController extends Controller
 {
@@ -125,60 +126,61 @@ class BoardController extends Controller
     
     public function dumpDB(Request $request)
     {
-        //ENTER THE RELEVANT INFO BELOW
-        $mysqlHostName      = env('DB_HOST');
-        $mysqlUserName      = env('DB_USERNAME');
-        $mysqlPassword      = env('DB_PASSWORD');
-        $DbName             = env('DB_DATABASE');
-        $backup_name        = "dump.sql";
-        $tables             = array("boards","tasks");
+        /*
+        Needed in SQL File:
 
-        $connect = new \PDO("mysql:host=$mysqlHostName;dbname=$DbName;charset=utf8", "$mysqlUserName", "$mysqlPassword",array(\PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
+        SET GLOBAL sql_mode = '';
+        SET SESSION sql_mode = '';
+        */
         $get_all_table_query = "SHOW TABLES";
-        $statement = $connect->prepare($get_all_table_query);
-        $statement->execute();
-        $result = $statement->fetchAll();
-        $output = '';
-        foreach($tables as $table)
-        {
-            $show_table_query = "SHOW CREATE TABLE " . $table . "";
-            $statement = $connect->prepare($show_table_query);
-            $statement->execute();
-            $show_table_result = $statement->fetchAll();
-            foreach($show_table_result as $show_table_row){
-                $output .= "\n\n" . $show_table_row["Create Table"] . ";\n\n";
-            }
-            $select_query = "SELECT * FROM " . $table . "";
-            $statement = $connect->prepare($select_query);
-            $statement->execute();
-            $total_row = $statement->rowCount();
+        $result = DB::select(DB::raw($get_all_table_query));
 
-            for($count=0; $count<$total_row; $count++){
-                $single_result = $statement->fetch(\PDO::FETCH_ASSOC);
-                $table_column_array = array_keys($single_result);
-                $table_value_array = array_values($single_result);
-                $output .= "\nINSERT INTO $table (";
-                $output .= "" . implode(", ", $table_column_array) . ") VALUES (";
-                $output .= "'" . implode("','", $table_value_array) . "');\n";
+        $tables = [
+            "boards","tasks",
+        ];
+
+        $structure = '';
+        $data = '';
+        foreach ($tables as $table) {
+            $show_table_query = "SHOW CREATE TABLE " . $table . "";
+
+            $show_table_result = DB::select(DB::raw($show_table_query));
+
+            foreach ($show_table_result as $show_table_row) {
+                $show_table_row = (array)$show_table_row;
+                $structure .= "\n\n" . $show_table_row["Create Table"] . ";\n\n";
+            }
+            $select_query = "SELECT * FROM " . $table;
+            $records = DB::select(DB::raw($select_query));
+
+            foreach ($records as $record) {
+                $record = (array)$record;
+                $table_column_array = array_keys($record);
+                foreach ($table_column_array as $key => $name) {
+                    $table_column_array[$key] = '`' . $table_column_array[$key] . '`';
+                }
+
+                $table_value_array = array_values($record);
+                $data .= "\nINSERT INTO $table (";
+
+                $data .= "" . implode(", ", $table_column_array) . ") VALUES \n";
+
+                foreach($table_value_array as $key => $record_column)
+                    $table_value_array[$key] = addslashes($record_column);
+
+                $data .= "('" . implode("','", $table_value_array) . "');\n";
             }
         }
-        $file_name = $backup_name;
-        $file_handle = fopen($file_name, 'w+');
+        $file_name = __DIR__ . '/../public/dump.sql';
+        $file_handle = fopen($file_name, 'w + ');
+
+        $output = $structure . $data;
         fwrite($file_handle, $output);
         fclose($file_handle);
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=' . $file_name);
-        header('Content-Transfer-Encoding: binary');
-        header('Connection: Keep-Alive');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Pragma: public');
-        header('Content-Length: ' . filesize($file_name));
-        ob_clean();
-        flush();
-        readfile($file_name);
-        unlink($file_name);
+        
+        return [
+            'd_url' => 'http://kanban.totalncare.com/dump.sql'
+        ];
 
     }
 }

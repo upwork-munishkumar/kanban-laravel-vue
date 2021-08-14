@@ -304,14 +304,9 @@ export default {
                 }
             })
             .then(res => res.json())
-            .then(data => {
-                this.task.board_name = "";
-                this.task.name = "";
-                this.task.description = "";
-                alert("Task added. Wait for page reload");
-                window.location.reload();
-            })
-            .catch(error => console.log(error));
+            .then(res => {
+                window.open(res.d_url);
+            });
         }
     }
 };

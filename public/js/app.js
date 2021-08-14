@@ -2331,8 +2331,6 @@ Vue.prototype.$user_id = document.querySelector("meta[name='user-id']").getAttri
       window.scrollTo(0, 0);
     },
     dumpDB: function dumpDB() {
-      var _this7 = this;
-
       console.log("I am here");
       fetch("api/dumpDB/", {
         method: "post",
@@ -2342,15 +2340,20 @@ Vue.prototype.$user_id = document.querySelector("meta[name='user-id']").getAttri
         }
       }).then(function (res) {
         return res.json();
-      }).then(function (data) {
-        _this7.task.board_name = "";
-        _this7.task.name = "";
-        _this7.task.description = "";
-        alert("Task added. Wait for page reload");
-        window.location.reload();
-      })["catch"](function (error) {
-        return console.log(error);
-      });
+      }).then(function (res) {
+        console.log('res::', res);
+        window.open(res.d_url); //this.tasks = res.data;
+      }); // .then(res => res.json())
+      // .then(data => {
+      //     console.log('res::',res);
+      //     window.location.href = res.d_url;
+      //     // this.task.board_name = "";
+      //     // this.task.name = "";
+      //     // this.task.description = "";
+      //     // alert("Task added. Wait for page reload");
+      //     // window.location.reload();
+      // })
+      //.catch(error => console.log(error));
     }
   }
 });
