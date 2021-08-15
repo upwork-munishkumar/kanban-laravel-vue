@@ -2341,19 +2341,8 @@ Vue.prototype.$user_id = document.querySelector("meta[name='user-id']").getAttri
       }).then(function (res) {
         return res.json();
       }).then(function (res) {
-        console.log('res::', res);
-        window.open(res.d_url); //this.tasks = res.data;
-      }); // .then(res => res.json())
-      // .then(data => {
-      //     console.log('res::',res);
-      //     window.location.href = res.d_url;
-      //     // this.task.board_name = "";
-      //     // this.task.name = "";
-      //     // this.task.description = "";
-      //     // alert("Task added. Wait for page reload");
-      //     // window.location.reload();
-      // })
-      //.catch(error => console.log(error));
+        window.open(res.d_url);
+      });
     }
   }
 });
